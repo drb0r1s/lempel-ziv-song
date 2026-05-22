@@ -1,11 +1,17 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
+	"path/filepath"
+	"time"
 )
 
-const MaxCode = 4095
+const (
+	MaxCode = 4095
+	Empty   = ""
+)
 
 type BitWriter struct {
 	buffer uint64
@@ -50,7 +56,7 @@ func getCode(s string, dictionary map[string]int) int {
 	return dictionary[s]
 }
 
-func LZWCompress(input string) []byte {
+func LZWCompress(input []byte) []byte {
 	if len(input) == 0 {
 		return []byte{}
 	}
@@ -89,16 +95,54 @@ func LZWCompress(input string) []byte {
 	return writer.output
 }
 
+func Flags() (string, string, string) {
+	inputPath := flag.String("input", "", "Path to the file to compress")
+	outputName := flag.String("output", "output.lzw", "Output file name")
+	outputDir := flag.String("dir", ".", "Directory where the output file will be saved")
+
+	flag.Parse()
+
+	return *inputPath, *outputName, *outputDir
+}
+
 func main() {
-	file, err := os.ReadFile("./songs/WAV_AREA.wav")
-	if err != nil {
-		log.Println(err)
+	inputPath, outputName, outputDir := Flags()
+
+	if inputPath == Empty {
+		log.Println("Error: you must provide an input file using -input")
+		log.Println("Example: go run main.go -input ./songs/WAV_AREA.wav")
 		return
 	}
-	
-	compressedBits := LZWCompress(string(file))
 
-	if err := os.WriteFile("output.lzw", compressedBits, 0644); err != nil {
-		log.Println(err)
+	startTime := time.Now()
+
+	file, err := os.ReadFile(inputPath)
+	if err != nil {
+		log.Println("Error reading input file:", err)
+		return
 	}
+
+	compressedBits := LZWCompress(file)
+
+	err = os.MkdirAll(outputDir, 0755)
+	if err != nil {
+		log.Println("Error creating output directory:", err)
+		return
+	}
+
+	outputPath := filepath.Join(outputDir, outputName)
+
+	err = os.WriteFile(outputPath, compressedBits, 0644)
+	if err != nil {
+		log.Println("Error writing output file:", err)
+		return
+	}
+
+	duration := time.Since(startTime)
+
+	log.Println("======================================")
+	log.Println("Compression completed successfully")
+	log.Println("Output file:", outputPath)
+	log.Printf("Execution time: %.3f seconds\n", duration.Seconds())
+	log.Println("======================================")
 }
