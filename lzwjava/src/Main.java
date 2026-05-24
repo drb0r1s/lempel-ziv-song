@@ -125,8 +125,8 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException {
-        String wavPath = "../songs/FIRST_SONG_WAV.wav";
-        String mp3Path = "../songs/FIRST_SONG_MP3.mp3";
+        String wavPath = "./songs/FIRST_SONG_WAV.wav";
+        String mp3Path = "./songs/FIRST_SONG_MP3.mp3";
         String outputPath = "output.lzw";
 
         if (args.length >= 1) wavPath = args[0];
